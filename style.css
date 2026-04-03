@@ -1,0 +1,36 @@
+
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+#map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#map canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  touch-action: none;
+}
+@font-face {
+  font-family: 'D-DIN Regular';
+  font-style: normal;
+  font-weight: normal;
+  src: local('D-DIN Regular'), url('fonts/D-DIN.woff') format('woff');
+}
+@font-face {
+  font-family: 'D-DIN DIN-Italic';
+  font-style: normal;
+  font-weight: normal;
+  src: local('D-DIN DIN-Italic'), url('fonts/D-DIN-Italic.woff') format('woff');
+}
+@font-face {
+  font-family: 'D-DIN DIN-Bold';
+  font-style: normal;
+  font-weight: normal;
+  src: local('D-DIN DIN-Bold'), url('fonts/D-DIN-Bold.woff') format('woff');
+}
