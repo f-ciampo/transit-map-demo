@@ -16,8 +16,7 @@ pmtiles.PMTiles.prototype.getTileImg = async function (z, x, y) {
   }
 };
 
-const pm = new pmtiles.PMTiles("./webp.pmtiles");
-/*
+//const pm = new pmtiles.PMTiles("./webp.pmtiles");
 const pm = {
   resolveUrl (z, x, y) {
     return TILESURL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
@@ -31,7 +30,7 @@ const pm = {
     });
   }
 };
-*/
+
 
 let tilesCanvas = document.getElementById("tilesCanvas");
 let tilesCanvasCtx = initializeCanvas(tilesCanvas);
