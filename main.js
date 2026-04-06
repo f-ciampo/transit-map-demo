@@ -16,7 +16,8 @@ pmtiles.PMTiles.prototype.getTileImg = async function (z, x, y) {
   }
 };
 
-//const pm = new pmtiles.PMTiles("https://assets.transit.ar/caba-11-19.pmtiles");
+const pm = new pmtiles.PMTiles("./webp.pmtiles");
+/*
 const pm = {
   resolveUrl (z, x, y) {
     return TILESURL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
@@ -30,6 +31,7 @@ const pm = {
     });
   }
 };
+*/
 
 let tilesCanvas = document.getElementById("tilesCanvas");
 let tilesCanvasCtx = initializeCanvas(tilesCanvas);
@@ -157,7 +159,7 @@ function render(now) {
     overlayCtx.restore();
   }
 
-  if (!DEBUG) {
+  if (DEBUG) {
     fps = 1000 / (now - lastTime);
     lastTime = now;
     overlayCtx.save();
