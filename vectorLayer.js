@@ -184,7 +184,7 @@ class VectorLayer {
     this.nCtx.beginPath();
     this.nCtx.fillStyle = fillStyle;
     this.nCtx.strokeStyle = strokeStyle;
-    this.nCtx.lineWidth = 2;
+    this.nCtx.lineWidth = 6;
     this.nCtx.arc(coord.x, coord.y, r, 0, Math.PI * 2);
     this.nCtx.stroke();
     this.nCtx.fill();
