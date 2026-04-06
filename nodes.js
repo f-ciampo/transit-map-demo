@@ -39,6 +39,15 @@ class Station {
   lightlyExtendUp() {
     this.minZ--;
   }
+  clone() {
+    const c = new this.constructor(this.id);
+    c.coords = this.coords.map(coord => coord?.clone());
+    c.minZ = this.minZ;
+    for(let i = this.minZ; i <= MAXZOOM; i++) {
+      c.setProp(i, this.getProp(i));
+    }
+    return c;
+  }
 }
 
 class MapLine {
@@ -95,6 +104,12 @@ class LineNode {
       else this.coords[MAXZOOM - z] = undefined;
     }
     if (this.minZ === z) this.minZ++;
+  }
+  clone() {
+    const c = new this.constructor();
+    c.coords = this.coords.map(coord => coord?.clone());
+    c.minZ = this.minZ;
+    return c;
   }
 }
 
