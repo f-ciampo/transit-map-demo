@@ -91,6 +91,9 @@ let prevDrawnZ = z0;
 let lastTime = performance.now();
 let fps = 0;
 
+let activeSnapGuide = null;
+let snapGuides = [];
+
 function render(now) {
   controlsUpdate();
 
@@ -139,16 +142,19 @@ function render(now) {
     }
   }
 
-  if (moved || !vectorLayer?.finishedDrawing) {
+  if (EDITMAP || moved || !vectorLayer?.finishedDrawing) {
     vectorLayer.render(viewLoc, z, z0, z1, stations, lines, selectedNode);
   }
 
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
   for (const img of refimgs) {
     const l = img.bbox.virtToPx(z, viewLoc);
-    linesCtx.save();
-    linesCtx.globalAlpha = img.opacity;
-    linesCtx.drawImage(img.img, l.minX, l.minY, l.maxX - l.minX, l.maxY - l.minY);
-    linesCtx.restore();
+    overlayCtx.save();
+    overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
+    overlayCtx.globalAlpha = img.opacity;
+    overlayCtx.drawImage(img.img, l.minX, l.minY, l.maxX - l.minX, l.maxY - l.minY);
+    overlayCtx.restore();
   }
 
   if (!DEBUG) {
@@ -157,7 +163,6 @@ function render(now) {
     overlayCtx.save();
     overlayCtx.beginPath();
     overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
-    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
     if (fps) overlayCtx.fillText(Math.round(fps), 50, 50);
     overlayCtx.fill();
     overlayCtx.restore();
@@ -165,7 +170,36 @@ function render(now) {
 
   prevViewLoc.set(viewLoc);
 
+  if(EDITMAP) {
+    for (const sg of snapGuides) {
+      drawDiagonals(sg.virtToPx(z, viewLoc), overlayCtx, '#aaf');
+    }
+  
+    if (activeSnapGuide)
+      drawDiagonals(activeSnapGuide.virtToPx(z, viewLoc), overlayCtx, '#faa');
+  }
+
   requestAnimationFrame(render);
+}
+
+function drawDiagonals(p, ctx, color = '#aaf') {
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, CANVASW / 2, CANVASH / 2);
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+
+  ctx.moveTo(p.x, -CANVASH / 2);
+  ctx.lineTo(p.x, CANVASH / 2);
+  ctx.moveTo(-CANVASW / 2, p.y);
+  ctx.lineTo(CANVASW / 2, p.y);
+
+  ctx.moveTo(-CANVASW + p.x, -CANVASW + p.y);
+  ctx.lineTo(CANVASW + p.x, CANVASW + p.y);
+  ctx.moveTo(CANVASW + p.x, -CANVASW + p.y);
+  ctx.lineTo(-CANVASW + p.x, CANVASW + p.y);
+
+  ctx.stroke();
+  ctx.restore();
 }
 
 function handleDrag(d) {
@@ -219,6 +253,33 @@ function handleKey(key, code) {
     case 'g':
       if (!EDITMAP) return;
       selectedNode.getCoord(z)?.set(mouseVirtPos);
+      if (activeSnapGuide) {
+        const sd = 15;
+        const snc = selectedNode.getCoord(z);
+        if (virtToPx(z, Math.abs(activeSnapGuide.x - mouseVirtPos.x)) < sd) {
+          snc.x = activeSnapGuide.x;
+          return;
+        }
+        if (virtToPx(z, Math.abs(activeSnapGuide.y - mouseVirtPos.y)) < sd) {
+          snc.y = activeSnapGuide.y;
+          return;
+        }
+        const screenOff = Math.max(pxToVirt(z, CANVASW), pxToVirt(z, CANVASH));
+        const p1 = snc.projectedToLine(
+          activeSnapGuide.subedXY(screenOff, screenOff), activeSnapGuide.addedXY(screenOff, screenOff)
+        );
+        if (virtToPx(z, snc.dist(p1)) < sd) {
+          snc.set(p1);
+          return;
+        }
+        const p2 = snc.projectedToLine(
+          activeSnapGuide.addedXY(-screenOff, screenOff), activeSnapGuide.addedXY(screenOff, -screenOff)
+        );
+        if (virtToPx(z, snc.dist(p2)) < sd) {
+          snc.set(p2);
+          return;
+        }
+      }
       break;
     case '+':
       if (z >= MAXZOOM) return;
@@ -245,6 +306,23 @@ function handleKey(key, code) {
       console.log("coord: ", selectedNode);
       selectedLine = line;
       lines.push(line);
+    case 's':
+      if (!EDITMAP) return;
+      for (const sg of snapGuides) {
+        const dd = sg?.virtToPx(z, viewLoc).dist(mousePos);
+        if (dd < 10) {
+          activeSnapGuide = sg;
+          return;
+        }
+      }
+      activeSnapGuide = activeSnapGuide ? null : mouseVirtPos;
+      break;
+    case 'S':
+      if (!EDITMAP) return;
+      if (activeSnapGuide)
+        snapGuides.push(activeSnapGuide.clone());
+      activeSnapGuide = null;
+      break;
   }
 }
 

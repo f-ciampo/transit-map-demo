@@ -141,6 +141,31 @@ class Coord {
       this.y = coord.y;
     return this;
   }
+  projectedToLine(lineStart, lineEnd) {
+    const x1 = lineStart.x;
+    const y1 = lineStart.y;
+
+    const x2 = lineEnd.x;
+    const y2 = lineEnd.y;
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    const lengthSq = dx * dx + dy * dy;
+
+    if (lengthSq === 0) {
+      return new Coord(x1, y1);
+    }
+
+    let t = ((this.x - x1) * dx + (this.y - y1) * dy) / lengthSq;
+
+    t = Math.max(0, Math.min(1, t));
+
+    return new Coord(
+      x1 + t * dx,
+      y1 + t * dy
+    );
+  }
   equals(coord, precision = 1E-6) {
     if (!coord) return false;
     return (Math.abs(coord.x - this.x) < precision &&
