@@ -114,9 +114,10 @@ class LineNode {
 }
 
 class LineProps {
-  constructor(name, lineWidth, color) {
+  constructor(name, lineWidth, color, textColor) {
     this.name = name;
     this.lineWidth = lineWidth;
     this.color = color;
+    this.textColor = textColor;
   }
 }

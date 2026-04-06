@@ -57,10 +57,10 @@ msgpackr.addExtension({
   Class: LineProps,
   type: 6,
   write(ml) {
-    return [ml.name, ml.lineWidth, ml.color];
+    return [ml.name, ml.lineWidth, ml.color, ml.textColor];
   },
   read(data) {
-    return new LineProps(data[0], data[1], data[2]);
+    return new LineProps(data[0], data[1], data[2], data[3]);
   }
 });
 

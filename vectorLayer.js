@@ -239,6 +239,7 @@ class VectorLayer {
         }
       }
 
+      this.tCtx.fillStyle = props.lineProps?.textColor ?? "#000000";
       this.tCtx.outlinedTextMultiline(props.title, x, y, 22);
       this.tCtx.restore();
     }
