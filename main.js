@@ -50,6 +50,8 @@ let z0 = z;
 let z1 = z;
 
 let viewLoc = new Coord(22661197 * 2, 40437852 * 2);
+let MAP_BOUNDS = new Bbox(45303305, 80851906,  45352924, 80896049);
+
 let prevViewLoc = viewLoc.clone();
 let tgtViewLoc = viewLoc.clone();
 const mainLoc0 = new Coord(22661197 * 2, 40437852 * 2);
@@ -99,6 +101,8 @@ function render(now) {
   controlsUpdate();
 
   stepZoom();
+
+  tgtViewLoc.snapInsideBbox(MAP_BOUNDS);
 
   const moved = z !== Math.round(z) || !prevViewLoc.equals(viewLoc);
 
@@ -212,7 +216,6 @@ function handleDrag(d) {
 
 function handleWheel(d) {
   if (z + d > MAXZOOM || z + d <= MINZOOM) return;
-  console.log("mousePos when handleWheel: ", mousePos);
   startZoom(d);
 }
 

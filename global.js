@@ -1,4 +1,4 @@
-const MINZOOM = 12;
+const MINZOOM = 13;
 const MAXZOOM = 19;
 const TSIZE = 256;
 const WORLD_EXTENT = Math.pow(2, MAXZOOM) * TSIZE;

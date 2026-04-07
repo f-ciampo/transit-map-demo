@@ -166,6 +166,13 @@ class Coord {
       y1 + t * dy
     );
   }
+  snapInsideBbox(bbox) {
+    if (this.x < bbox.minX) this.x = bbox.minX;
+    if (this.y < bbox.minY) this.y = bbox.minY;
+    if (this.x > bbox.maxX) this.x = bbox.maxX;
+    if (this.y > bbox.maxY) this.y = bbox.maxY;
+    return this;
+  }
   equals(coord, precision = 1E-6) {
     if (!coord) return false;
     return (Math.abs(coord.x - this.x) < precision &&
@@ -310,6 +317,12 @@ class Bbox {
     return new Bbox(
       virtToPx(z, this.minX - viewLoc.x), virtToPx(z, this.minY - viewLoc.y),
       virtToPx(z, this.maxX - viewLoc.x), virtToPx(z, this.maxY - viewLoc.y)
+    );
+  }
+  latLngToVirt() {
+    return new Bbox(
+      lngToVirtX(this.minX), latToVirtY(this.minY),
+      lngToVirtX(this.maxX), latToVirtY(this.maxY)
     );
   }
 }
