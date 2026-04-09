@@ -21,10 +21,7 @@ class Tiles {
 
     this.allTilesReady = false;
 
-    this.maxTiles =
-      (CANVASW / TSIZE + 1) *
-      (CANVASH / TSIZE + 1) *
-      3;
+    this.calculateMaxTiles();
 
     this.finishedDrawing = false;
   }
@@ -95,6 +92,13 @@ class Tiles {
     }
   }
 
+  calculateMaxTiles() {
+    this.maxTiles =
+      (CANVASW / TSIZE + 1) *
+      (CANVASH / TSIZE + 1) *
+      3;
+  }
+
   reset() {
     for (const tile of this.tiles.values()) {
       if (tile.img?.close) tile.img.close();
@@ -102,10 +106,6 @@ class Tiles {
 
     this.tiles.clear();
     this.allTilesReady = false;
-    this.maxTiles =
-      (CANVASW / TSIZE + 1) *
-      (CANVASH / TSIZE + 1) *
-      3;
   }
 }
 
@@ -115,17 +115,15 @@ class MapLayer {
     this.ctx = canvas.getContext("2d");
     this.z = z;
 
-    this.resetTransform();
-    window.addEventListener('resize', () => {
-      this.resetTransform();
-    });
-
     this.tiles = new Tiles(pm, z);
+
+    this.resetTransform();
 
     this.lastP = new Coord();
   }
 
   resetTransform() {
+    this.tiles.calculateMaxTiles();
     this.ctx.strokeStyle = "#000";
     this.ctx.lineWidth = 1;
     this.ctx.fillStyle = "#000";
@@ -145,6 +143,8 @@ class MapLayer {
   }
 
   renderMap(loc, z, update) {
+    if (windowResized) this.resetTransform();
+
     const p = loc.virtToTile(this.z);
 
     const scale = Math.pow(2, z - this.z);

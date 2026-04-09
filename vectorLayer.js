@@ -10,9 +10,6 @@ class VectorLayer {
     this.renderMargins = 200;
 
     this.defaults();
-    window.addEventListener('resize', () => {
-      this.defaults();
-    });
 
     this.prev = {};
 
@@ -69,6 +66,8 @@ class VectorLayer {
   }
 
   render(loc, viewZ, z0, z1, stations, lines, selected) {
+    if (windowResized) this.defaults();
+
     const t = (z0 === z1) ? 1 : (viewZ - z0) / (z1 - z0);
 
     this.clear();

@@ -112,7 +112,7 @@ function render(now) {
     clean up this logic...
     tile positioning seems wrong when mooving while zooming
   */
-  if (moved || !mLayer?.finishedDrawing) {
+  if (moved || !mLayer?.finishedDrawing || windowResized) {
     if (z !== Math.round(z)) {
       tilesCanvasCtx.setTransform(1, 0, 0, 1, 0, 0);
       tilesCanvasCtx.clearRect(0, 0, tilesCanvas.width, tilesCanvas.height);
@@ -147,7 +147,7 @@ function render(now) {
     }
   }
 
-  if (EDITMAP || moved || !vectorLayer?.finishedDrawing) {
+  if (EDITMAP || moved || !vectorLayer?.finishedDrawing || windowResized) {
     vectorLayer.render(viewLoc, z, z0, z1, stations, lines, selectedNode);
   }
 
@@ -183,6 +183,8 @@ function render(now) {
     if (activeSnapGuide)
       drawDiagonals(activeSnapGuide.virtToPx(z, viewLoc), overlayCtx, '#faa');
   }
+
+  if(windowResized) windowResized = false;
 
   requestAnimationFrame(render);
 }
