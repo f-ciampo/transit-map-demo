@@ -61,8 +61,10 @@ class MapLine {
     }
   }
   lightlyExtendUp() {
+    const minMinZ = Math.min(...this.nodes.map(n => n.minZ));
+    console.log(minMinZ); 
     for (const n of this.nodes) {
-      n.lightlyExtendUp();
+      if (n.minZ === minMinZ) n.lightlyExtendUp();
     }
   }
   addCoord(z, coord) {

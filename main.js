@@ -1,9 +1,9 @@
 let ZOOMSPEED = 0.3; //TODO: make this independent of fps
 
-let z = 15;
+let z = 14;
 
 let tileLayers = [];
-const TILESURL = 'https://tiles.transit.ar/caba-11-19/{z}/{x}/{y}.webp';
+const TILESURL = 'https://tiles.transit.ar/caba-256/{z}/{x}/{y}.webp';
 
 pmtiles.PMTiles.prototype.getTileImg = async function (z, x, y) {
   const r = await this.getZxy(z, x, y);
@@ -35,8 +35,8 @@ const pm = {
 let tilesCanvas = document.getElementById("tilesCanvas");
 let tilesCanvasCtx = initializeCanvas(tilesCanvas);
 
-const minMapLayer = 15;
-for (let z = minMapLayer; z <= MAXZOOM; z++) {
+const minMapLayer = 16;
+for (let z = minMapLayer; z <= MAXVIEWZOOM; z++) {
   tileLayers[z] = new MapLayer(tilesCanvas, pm, z);
 }
 
@@ -156,7 +156,7 @@ function render(now) {
   for (const img of refimgs) {
     const l = img.bbox.virtToPx(z, viewLoc);
     overlayCtx.save();
-    overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
+    overlayCtx.setTransform(1, 0, 0, 1, CANVASW / 2, CANVASH / 2);
     overlayCtx.globalAlpha = img.opacity;
     overlayCtx.drawImage(img.img, l.minX, l.minY, l.maxX - l.minX, l.maxY - l.minY);
     overlayCtx.restore();
@@ -215,7 +215,7 @@ function handleDrag(d) {
 }
 
 function handleWheel(d) {
-  if (z + d > MAXZOOM || z + d <= MINZOOM) return;
+  if (z + d > MAXVIEWZOOM || z + d <= MINZOOM) return;
   startZoom(d);
 }
 
@@ -286,7 +286,7 @@ function handleKey(key, code) {
       }
       break;
     case '+':
-      if (z >= MAXZOOM) return;
+      if (z >= MAXVIEWZOOM) return;
       startZoom(1);
       break;
     case '-':

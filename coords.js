@@ -313,7 +313,7 @@ class Bbox {
     this.maxY = viewLoc.y + dy;
     return this;
   }
-  virtToPx(z, viewLoc) {
+  virtToPx(z, viewLoc = new Coord()) {
     return new Bbox(
       virtToPx(z, this.minX - viewLoc.x), virtToPx(z, this.minY - viewLoc.y),
       virtToPx(z, this.maxX - viewLoc.x), virtToPx(z, this.maxY - viewLoc.y)
