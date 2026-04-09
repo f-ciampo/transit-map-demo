@@ -211,7 +211,7 @@ class MapLayer {
       }
     }
 
-    this.finishedDrawing = loc.equals(this.lastP) && this.allTilesReady;
+    this.finishedDrawing = loc.equals(this.lastP) && this.allTilesReady && !windowResized;
 
     this.allTilesReady = allReady || !update;
     this.lastP.set(loc);

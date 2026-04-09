@@ -108,7 +108,8 @@ class VectorLayer {
     this.finishedDrawing =
       loc.equals(this.prev?.loc) && viewZ === this.prev.viewZ &&
       z0 === this.prev.z0 && z1 === this.prev.z1 && selected === this.prev.selected &&
-      stations?.length > 0 && lines?.length > 0;
+      stations?.length > 0 && lines?.length > 0 &&
+      !windowResized;
     this.prev = { loc, viewZ, z0, z1, selected };
   }
   renderLine(l, viewZ, z0, z1, t, loc, selected) {
