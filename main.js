@@ -3,7 +3,7 @@ let ZOOMSPEED = 0.3; //TODO: make this independent of fps
 let z = 14;
 
 let tileLayers = [];
-const TILESURL = 'https://tiles.transit.ar/caba-256/{z}/{x}/{y}.webp';
+const TILESURL = 'https://tiles.transit.ar/caba-512/{z}/{x}/{y}.webp';
 
 pmtiles.PMTiles.prototype.getTileImg = async function (z, x, y) {
   const r = await this.getZxy(z, x, y);
@@ -18,10 +18,10 @@ pmtiles.PMTiles.prototype.getTileImg = async function (z, x, y) {
 
 //const pm = new pmtiles.PMTiles("./webp.pmtiles");
 const pm = {
-  resolveUrl (z, x, y) {
+  resolveUrl(z, x, y) {
     return TILESURL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
   },
-  getTileImg (z, x, y) {
+  getTileImg(z, x, y) {
     return new Promise((resolve) => {
       const img = new Image();
       img.src = this.resolveUrl(z, x, y);
@@ -35,7 +35,7 @@ const pm = {
 let tilesCanvas = document.getElementById("tilesCanvas");
 let tilesCanvasCtx = initializeCanvas(tilesCanvas);
 
-const minMapLayer = 16;
+const minMapLayer = 15;
 for (let z = minMapLayer; z <= MAXVIEWZOOM; z++) {
   tileLayers[z] = new MapLayer(tilesCanvas, pm, z);
 }
@@ -49,8 +49,8 @@ let lines = [];
 let z0 = z;
 let z1 = z;
 
-let viewLoc = new Coord(22661197 * 2, 40437852 * 2);
-let MAP_BOUNDS = new Bbox(45303305, 80851906,  45352924, 80896049);
+let viewLoc = new Coord(22661197 * 4, 40437852 * 4);
+let MAP_BOUNDS = new Bbox(45303305 * 2, 80851906 * 2, 45352924 * 2, 80896049 * 2);
 
 let prevViewLoc = viewLoc.clone();
 let tgtViewLoc = viewLoc.clone();
@@ -175,16 +175,16 @@ function render(now) {
 
   prevViewLoc.set(viewLoc);
 
-  if(EDITMAP) {
+  if (EDITMAP) {
     for (const sg of snapGuides) {
       drawDiagonals(sg.virtToPx(z, viewLoc), overlayCtx, '#aaf');
     }
-  
+
     if (activeSnapGuide)
       drawDiagonals(activeSnapGuide.virtToPx(z, viewLoc), overlayCtx, '#faa');
   }
 
-  if(windowResized) windowResized = false;
+  if (windowResized) windowResized = false;
 
   requestAnimationFrame(render);
 }

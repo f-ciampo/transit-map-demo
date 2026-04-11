@@ -94,9 +94,9 @@ class Tiles {
 
   calculateMaxTiles() {
     this.maxTiles =
-      (CANVASW / TSIZE + 1) *
-      (CANVASH / TSIZE + 1) *
-      3;
+      (Math.ceil(CANVASW / TSIZE) + 3) *
+      (Math.ceil(CANVASH / TSIZE) + 3) *
+      2;
   }
 
   reset() {
@@ -123,6 +123,10 @@ class MapLayer {
   }
 
   resetTransform() {
+    this.numOfX = Math.ceil(CANVASW / TSIZE);
+    if (this.numOfX % 2 === 0) this.numOfX++;
+    this.numOfY = Math.ceil(CANVASH / TSIZE);
+    if (this.numOfY % 2 === 0) this.numOfY++;
     this.tiles.calculateMaxTiles();
     this.ctx.strokeStyle = "#000";
     this.ctx.lineWidth = 1;
@@ -131,7 +135,7 @@ class MapLayer {
     this.ctx.textBaseline = "middle";
     this.ctx.font = "20px sans-serif";
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+    this.ctx.translate(CANVASW / 2, CANVASH / 2);
   }
 
   clean() {
