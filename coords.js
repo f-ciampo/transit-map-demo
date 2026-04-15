@@ -22,6 +22,16 @@ function lngToVirtX(lng) {
   return (lng + 180) / 360 * WORLD_EXTENT;
 }
 
+function virtXToLng(virtX) {
+  return (virtX / WORLD_EXTENT) * 360 - 180;
+}
+
+function virtYToLat(virtY) {
+  const m = (1 - virtY / (0.5 * WORLD_EXTENT)) * Math.PI;
+  const t = 2 * Math.atan(Math.exp(m)) - Math.PI / 2;
+  return t * 180 / Math.PI;
+}
+
 class Coord {
   constructor(x = 0.0, y = 0.0) {
     this.x = x, this.y = y;
@@ -185,7 +195,7 @@ class Coord {
   virtToPx(z, viewLoc, tgt = new this.constructor()) {
     if (viewLoc) {
       tgt.setXY(virtToPx(z, this.x - viewLoc.x),
-                virtToPx(z, this.y - viewLoc.y));
+        virtToPx(z, this.y - viewLoc.y));
     } else {
       tgt.setXY(virtToPx(z, this.x), virtToPx(z, this.y));
     }
@@ -323,6 +333,12 @@ class Bbox {
     return new Bbox(
       lngToVirtX(this.minX), latToVirtY(this.minY),
       lngToVirtX(this.maxX), latToVirtY(this.maxY)
+    );
+  }
+  virtToLatLng() {
+    return new Bbox(
+      virtXToLng(this.minX), virtYToLat(this.minY),
+      virtXToLng(this.maxX), virtYToLat(this.maxY)
     );
   }
 }
