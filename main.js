@@ -35,7 +35,7 @@ const pm = {
 let tilesCanvas = document.getElementById("tilesCanvas");
 let tilesCanvasCtx = initializeCanvas(tilesCanvas);
 
-const minMapLayer = 15;
+const minMapLayer = MINZOOM;
 for (let z = minMapLayer; z <= MAXVIEWZOOM; z++) {
   tileLayers[z] = new MapLayer(tilesCanvas, pm, z);
 }
