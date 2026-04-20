@@ -22,6 +22,7 @@ Las teselas rasterizadas tienen una base de OSM con [veredas](https://data.bueno
 El mapa esquemático está basado en el [mapa oficial integrado de transporte](https://enelsubte.com/noticias/buenos-aires-ya-tiene-su-primer-mapa-unificado-de-transporte/), aunque la idea sería reemplazarlo por uno más propicio una vez que esté completa la parte técnica.
 
 **Desarrollo**<br/>
+Actualmente no hay forma sencilla de hacer otros mapas con el código.<br/>
 Empecé a hacer pruebas a fines de 2025 con intenciones de hacer un mapa que tuviera en forma de grafo todas las líneas de subte, tren y colectivo del Área Metropolitana de Buenos Aires, y pudiese representarlas geográfica y esquemáticamente de forma dinámica. Sin embargo, me fuí dando cuenta que sería complicado representar todo como objetos en Javascript sin ocupar muchísima memoria o CPU, que el canvas HTML tiene limitaciones demasiado grandes, y que la forma de funcionamiento de ambos hace muy difícil de optimizar el código.<br/>
 Por esto, decidí juntar varias de estas pruebas en una demo sencilla de subte y trenes de CABA para tener algo funcional, y al terminarla reescribir todo de cero en WebAssembly y WebGL. Por esto las estructuras de datos no son muy eficientes y el código actual en general no es muy prolijo.<br/>
 
@@ -43,6 +44,6 @@ Por esto, decidí juntar varias de estas pruebas en una demo sencilla de subte y
 - Diagnosticar baja performance en Firefox
 - Agregar un buscador de direcciones y propagarlas a niveles esquemáticos
 - Desacoplar el mapa de CABA de la demo y agregar UI para cambiarlo
-- Hacer UI para editar mapas
+- Hacer UI para editar mapas y documentar
 - Limpiar el código
 - Reemplazar el mapa esquemático por uno más propicio
