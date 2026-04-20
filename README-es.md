@@ -1,5 +1,8 @@
 # [demo.transit.ar](https://demo.transit.ar)
-Demo (en construcción) de un mapa de transporte esquemático que se vuelve geográfico al ampliarlo.<br/>
+Demo (en construcción) de un mapa de transporte esquemático que se vuelve geográfico al ampliarlo.
+
+[![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
+[![es](https://img.shields.io/badge/idioma-es-lightblue.svg)](README-es.md)
 
 <img src="gitAssets/zoom.gif" width=400>
 
