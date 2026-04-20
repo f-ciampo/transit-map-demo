@@ -50,12 +50,10 @@ let z0 = z;
 let z1 = z;
 
 let viewLoc = new Coord(22661197 * 4, 40437852 * 4);
-let MAP_BOUNDS = new Bbox(45303305 * 2, 80851906 * 2, 45352924 * 2, 80896049 * 2);
+let MAP_BOUNDS = new Bbox(-58.53, -34.534, -58.335, -34.70).latLngToVirt();
 
 let prevViewLoc = viewLoc.clone();
 let tgtViewLoc = viewLoc.clone();
-const mainLoc0 = new Coord(22661197 * 2, 40437852 * 2);
-const mainLoc1 = new Coord(22661497 * 2, 40437852 * 2);
 
 const linesCanvas = document.getElementById("linesCanvas");
 initializeCenteredCanvas(linesCanvas);
