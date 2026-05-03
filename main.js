@@ -5,39 +5,12 @@ let z = 14;
 let tileLayers = [];
 const TILESURL = 'https://tiles.transit.ar/caba-512/{z}/{x}/{y}.webp';
 
-pmtiles.PMTiles.prototype.getTileImg = async function (z, x, y) {
-  const r = await this.getZxy(z, x, y);
-  if (!r || !r.data) return null;
-  try {
-    const blob = new Blob([r.data]);
-    return await createImageBitmap(blob);
-  } catch (e) {
-    return null;
-  }
-};
-
-//const pm = new pmtiles.PMTiles("./webp.pmtiles");
-const pm = {
-  resolveUrl(z, x, y) {
-    return TILESURL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-  },
-  getTileImg(z, x, y) {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = this.resolveUrl(z, x, y);
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-    });
-  }
-};
-
-
 let tilesCanvas = document.getElementById("tilesCanvas");
 let tilesCanvasCtx = initializeCanvas(tilesCanvas);
 
 const minMapLayer = MINZOOM;
 for (let z = minMapLayer; z <= MAXVIEWZOOM; z++) {
-  tileLayers[z] = new MapLayer(tilesCanvas, pm, z);
+  tileLayers[z] = new MapLayer(tilesCanvas, z);
 }
 
 let mLayer = tileLayers[z];

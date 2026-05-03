@@ -10,10 +10,9 @@ const DEBUGTILES = false;
 const FADE_MILLIS = 200;
 
 class Tiles {
-  constructor(tileFetcher, z) {
+  constructor(z) {
     this.z = z;
     this.tiles = new Map();
-    this.tileFetcher = tileFetcher;
 
     this.blankImage = document.createElement("canvas");
     this.blankImage.width = TSIZE;
@@ -30,10 +29,8 @@ class Tiles {
     return `${x}/${y}`;
   }
 
-  async fetchTileBitmap(x, y) {
-    const r = await this.tileFetcher.getTileImg(this.z, x, y);
-    if (r) return r;
-    return null;
+  resolveUrl(z, x, y) {
+    return TILESURL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
   }
 
   add(x, y, key = this._key(x, y)) {
@@ -43,24 +40,25 @@ class Tiles {
       img: null
     };
 
+    const controller = new AbortController();
+    const signal = controller.signal;
+    const img = new Image();
+    img.src = this.resolveUrl(this.z, x, y);
+
+    img.onload = () => {
+      tile.img = img;
+      tile.loaded = true;
+      tile.fadeStart = performance.now();
+      console.log("img loaded");
+    }
+    img.onerror = () => tile.failed = true;
+
+    tile.cancel = () => {
+      controller.abort();
+    };
+
     this.tiles.set(key, tile);
-
-    this.fetchTileBitmap(x, y)
-      .then(bitmap => {
-        const t = this.tiles.get(key);
-        if (!t) return;
-
-        t.img = bitmap;
-        t.loaded = true;
-
-        if (!t.fadeStart) {
-          t.fadeStart = performance.now();
-        }
-      })
-      .catch(() => {
-        const t = this.tiles.get(key);
-        if (t) t.failed = true;
-      });
+    
     this.clean();
   }
 
@@ -110,12 +108,12 @@ class Tiles {
 }
 
 class MapLayer {
-  constructor(canvas, pm, z) {
+  constructor(canvas, z) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.z = z;
 
-    this.tiles = new Tiles(pm, z);
+    this.tiles = new Tiles(z);
 
     this.resetTransform();
 
@@ -184,11 +182,10 @@ class MapLayer {
 
         //TODO: make it only one access
         const tile = this.tiles.tile(tx, ty, update);
-        const img = tile?.img;//this.tiles.img(tx, ty, update);
-
+      
         let fullyDrawn = false;
 
-        if (tile?.loaded && img) {
+        if (tile?.loaded) {
           let alpha = 1;
 
           if (tile?.fadeStart) {
@@ -197,11 +194,11 @@ class MapLayer {
           }
           if (alpha < 0.99) {
             this.ctx.globalAlpha = alpha;
-            this.ctx.drawImage(img, xloc, yloc, TSIZE + 1, TSIZE + 1);
+            this.ctx.drawImage(tile.img, xloc, yloc, TSIZE + 1, TSIZE + 1);
             this.ctx.globalAlpha = pAlpha;
           } else {
             alpha = 1;
-            this.ctx.drawImage(img, xloc, yloc, TSIZE + 1, TSIZE + 1);
+            this.ctx.drawImage(tile.img, xloc, yloc, TSIZE + 1, TSIZE + 1);
             fullyDrawn = true;
           }
         }
