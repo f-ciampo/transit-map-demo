@@ -11,6 +11,9 @@ function virtToPx(z, v) {
 function virtToTile(z, v) {
   return v / WORLD_EXTENT * Math.pow(2, z);
 }
+function tileToVirt(z, t) {
+  return t * WORLD_EXTENT / Math.pow(2, z);
+}
 
 function latToVirtY(lat) {
   const t = Math.max(-85.05112878, Math.min(85.05112878, lat)) * Math.PI / 180;
@@ -206,8 +209,22 @@ class Coord {
     tgt.z = z;
     return tgt;
   }
+  tileToVirt(z, tgt = new this.constructor()) {
+    tgt.setXY(tileToVirt(z, this.x), tileToVirt(z, this.y));
+    tgt.z = z;
+    return tgt;
+  }
+  tileToPx(z, viewLoc, tgt = new this.constructor()) {
+    tgt.setXY(tileToVirt(z, this.x), tileToVirt(z, this.y));
+    tgt = tgt.virtToPx(z, viewLoc);
+    tgt.z = z;
+    return tgt;
+  }
   latLngToVirt() {
     return new this.constructor(lngToVirtX(this.x), latToVirtY(this.y));
+  }
+  virtToLatLng() {
+    return new this.constructor(virtXToLng(this.x), virtYToLat(this.y));
   }
   toBbox() {
     return { minX: this.x, minY: this.y, maxX: this.x, maxY: this.y };
