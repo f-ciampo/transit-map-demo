@@ -1,111 +1,5 @@
-
-/*
-TODO:
-It sometimes crashes on phone
-Caching could be better, need to check what the pmtiles lib does under the hood
-It breaks when resizing the window
-When zooming in the borders, it seems to redraw tiles that it had already drawn
-*/
 const DEBUGTILES = false;
 const FADE_MILLIS = 200;
-
-class Tiles {
-  constructor(z) {
-    this.z = z;
-    this.tiles = new Map();
-
-    this.blankImage = document.createElement("canvas");
-    this.blankImage.width = TSIZE;
-    this.blankImage.height = TSIZE;
-
-    this.allTilesReady = false;
-
-    this.calculateMaxTiles();
-
-    this.finishedDrawing = false;
-  }
-
-  _key(x, y) {
-    return `${x}/${y}`;
-  }
-
-  resolveUrl(z, x, y) {
-    return TILESURL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
-  }
-
-  add(x, y, key = this._key(x, y)) {
-    const tile = {
-      loaded: false,
-      failed: false,
-      img: null
-    };
-
-    const controller = new AbortController();
-    const signal = controller.signal;
-    const img = new Image();
-    img.src = this.resolveUrl(this.z, x, y);
-
-    img.onload = () => {
-      tile.img = img;
-      tile.loaded = true;
-      tile.fadeStart = performance.now();
-      console.log("img loaded");
-    }
-    img.onerror = () => tile.failed = true;
-
-    tile.cancel = () => {
-      controller.abort();
-    };
-
-    this.tiles.set(key, tile);
-    
-    this.clean();
-  }
-
-  tile(x, y, update) {
-    const key = this._key(x, y);
-    let tile = this.tiles.get(key);
-
-    if (!update) return tile;
-
-    if (!tile) {
-      this.add(x, y, key);
-    } else {
-      this.tiles.delete(key);
-      this.tiles.set(key, tile);
-    }
-
-    return tile;
-  }
-
-  clean() {
-    while (this.tiles.size > this.maxTiles) {
-      const oldestKey = this.tiles.keys().next().value;
-      const tile = this.tiles.get(oldestKey);
-
-      // is this necessary, or does the lib/browser manage it?
-      if (tile?.img?.close) tile.img.close();
-
-      this.tiles.delete(oldestKey);
-    }
-  }
-
-  calculateMaxTiles() {
-    this.maxTiles =
-      (Math.ceil(CANVASW / TSIZE) + 3) *
-      (Math.ceil(CANVASH / TSIZE) + 3) *
-      2;
-  }
-
-  reset() {
-    for (const tile of this.tiles.values()) {
-      if (tile.img?.close) tile.img.close();
-    }
-
-    this.tiles.clear();
-    this.allTilesReady = false;
-  }
-}
 
 class MapLayer {
   constructor(canvas, z) {
@@ -113,7 +7,7 @@ class MapLayer {
     this.ctx = canvas.getContext("2d");
     this.z = z;
 
-    this.tiles = new Tiles(z);
+    this.tiles = new Map();
 
     this.resetTransform();
 
@@ -125,7 +19,6 @@ class MapLayer {
     if (this.numOfX % 2 === 0) this.numOfX++;
     this.numOfY = Math.ceil(CANVASH / TSIZE);
     if (this.numOfY % 2 === 0) this.numOfY++;
-    this.tiles.calculateMaxTiles();
     this.ctx.strokeStyle = "#000";
     this.ctx.lineWidth = 1;
     this.ctx.fillStyle = "#000";
@@ -137,80 +30,145 @@ class MapLayer {
   }
 
   clean() {
-    this.tiles.reset();
+    this.tiles.forEach((tile) => {
+      tile.cancel();
+    });
   }
 
   needsRendering(loc, z, update) {
     return loc.equals(this.lastP) && this.allTilesReady;
   }
 
+  resolveTileUrl(z, x, y) {
+    return TILESURL.replace('{z}', z).replace('{x}', x).replace('{y}', y);
+  }
+
+  addTile(tx, ty, it) {
+    const key = `${tx}/${ty}`;
+    let tile = this.tiles.get(key);
+    if (tile) {
+      tile.it = it;
+      return;
+    }
+    tile = {
+      it: it,
+      pos: new Coord(tx, ty),
+      loaded: false,
+      failed: false,
+      img: null,
+      fadeStart: it
+    };
+
+    const img = new Image();
+
+    img.src = this.resolveTileUrl(this.z, tx, ty);
+
+    img.onload = () => {
+      tile.img = img;
+      tile.loaded = true;
+      tile.fadeStart = performance.now();
+    };
+
+    img.onerror = () => tile.failed = true;
+ 
+    tile.cancel = () => {
+      img.onload = null;
+      img.onerror = null;
+      img.src = "";
+      this.tiles.delete(key);
+    };
+
+    this.tiles.set(key, tile);
+  }
+
+  getTiles(loc) {
+    const p = loc.virtToTile(this.z);
+    const px = Math.floor(p.x);
+    const py = Math.floor(p.y);
+
+    //TODO: only add 1 when it is necessary
+    let numOfX = Math.ceil(this.canvas.width / TSIZE) + 1;
+    let numOfY = Math.ceil(this.canvas.height / TSIZE) + 1;
+    console.log(numOfX, numOfY);
+
+    const it = performance.now();
+
+    let halfX = Math.floor(numOfX / 2), halfY = Math.floor(numOfY / 2);
+    if (p.x - px > 0.5 && numOfX % 2 === 0) halfX--;
+    if (p.y - py > 0.5 && numOfY % 2 === 0) halfY--;
+
+    for (let x = 0; x < numOfX; x++) {
+      for (let y = 0; y < numOfY; y++) {
+        let tx = px + x - halfX;
+        let ty = py + y - halfY;
+        this.addTile(tx, ty, it);
+      }
+    }
+
+    this.tiles.forEach(tile => {
+      if (
+        tile.it !== it &&
+        (tile.pos.x < px - halfX - 1 || tile.pos.x > px + (numOfX - halfX) ||
+          (tile.pos.y < py - halfY - 1 || tile.pos.y > py + (numOfY - halfY)))
+      ) {
+        tile.cancel();
+      }
+    });
+  }
+
   renderMap(loc, z, update) {
     if (windowResized) this.resetTransform();
 
-    const p = loc.virtToTile(this.z);
+    this.getTiles(loc);
 
     const scale = Math.pow(2, z - this.z);
 
     let allReady = true;
 
-    let numOfX = Math.ceil(this.canvas.width / TSIZE);
-    if (numOfX % 2 === 0) numOfX++;
-
-    let numOfY = Math.ceil(this.canvas.height / TSIZE);
-    if (numOfY % 2 === 0) numOfY++;
-
     this.ctx.setTransform(scale, 0, 0, scale,
       this.canvas.width / 2,
       this.canvas.height / 2);
-
-    const px = Math.floor(p.x);
-    const py = Math.floor(p.y);
-    const pxOff = (p.x - px) * TSIZE;
-    const pyOff = (p.y - py) * TSIZE;
 
     const pAlpha = this.ctx.globalAlpha;
 
     const now = performance.now()
 
-    for (let x = -1; x < numOfX + 1; x++) {
-      for (let y = -1; y < numOfY + 1; y++) {
-        const xloc = x * TSIZE - (numOfX - 1) * TSIZE / 2 - pxOff;
-        const yloc = y * TSIZE - (numOfY - 1) * TSIZE / 2 - pyOff;
+    this.tiles.forEach((tile, key) => {
+      const ppx = tile.pos.tileToPx(this.z, loc);
+      if (ppx.x < -CANVASW / 2 - TSIZE || ppx.x > CANVASW / 2 + TSIZE ||
+        ppx.y < -CANVASH / 2 - TSIZE || ppx.y > CANVASH / 2 + TSIZE) return;
 
-        let tx = px + x - (numOfX - 1) / 2;
-        let ty = py + y - (numOfY - 1) / 2;
+      let fullyDrawn = false;
 
-        //TODO: make it only one access
-        const tile = this.tiles.tile(tx, ty, update);
-      
-        let fullyDrawn = false;
+      if (tile?.loaded) {
+        let alpha = 1;
 
-        if (tile?.loaded) {
-          let alpha = 1;
-
-          if (tile?.fadeStart) {
-            const elapsed = now - tile.fadeStart;
-            alpha = Math.min(pAlpha, elapsed / FADE_MILLIS);
-          }
-          if (alpha < 0.99) {
-            this.ctx.globalAlpha = alpha;
-            this.ctx.drawImage(tile.img, xloc, yloc, TSIZE + 1, TSIZE + 1);
-            this.ctx.globalAlpha = pAlpha;
-          } else {
-            alpha = 1;
-            this.ctx.drawImage(tile.img, xloc, yloc, TSIZE + 1, TSIZE + 1);
-            fullyDrawn = true;
-          }
+        if (tile?.fadeStart) {
+          const elapsed = now - tile.fadeStart;
+          alpha = Math.min(pAlpha, elapsed / FADE_MILLIS);
+        }
+        if (alpha < 0.99) {
+          this.ctx.globalAlpha = alpha;
+          this.ctx.drawImage(tile.img, ppx.x, ppx.y, TSIZE + 1, TSIZE + 1);
+          this.ctx.globalAlpha = pAlpha;
+        } else {
+          alpha = 1;
+          this.ctx.drawImage(tile.img, ppx.x, ppx.y, TSIZE + 1, TSIZE + 1);
+          fullyDrawn = true;
         }
 
-        if (!tile || !fullyDrawn || tile.failed) allReady = false;
-
-        if (DEBUGTILES) {
-          this.ctx.strokeRect(xloc, yloc, TSIZE, TSIZE);
-          this.ctx.fillText([tx, ty].toString(), xloc + TSIZE / 2, yloc + TSIZE / 2);
-        }
       }
-    }
+
+      if (!tile || !fullyDrawn || tile.failed) allReady = false;
+
+      if (DEBUGTILES) {
+        this.ctx.strokeRect(ppx.x, ppx.y, TSIZE, TSIZE);
+        this.ctx.fillText(
+          [tile.pos.x, tile.pos.y].toString(),
+          ppx.x + TSIZE / 2, ppx.y + TSIZE / 2
+        );
+      }
+    });
 
     this.finishedDrawing = loc.equals(this.lastP) && this.allTilesReady && !windowResized;
 
