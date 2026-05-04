@@ -89,7 +89,6 @@ class MapLayer {
     //TODO: only add 1 when it is necessary
     let numOfX = Math.ceil(this.canvas.width / TSIZE) + 1;
     let numOfY = Math.ceil(this.canvas.height / TSIZE) + 1;
-    console.log(numOfX, numOfY);
 
     const it = performance.now();
 
