@@ -132,10 +132,12 @@ class MapLayer {
 
     const now = performance.now()
 
+    const boundsX = CANVASW / scale / 2 + TSIZE, boundsY = CANVASH / scale / 2 + TSIZE;
+
     this.tiles.forEach((tile, key) => {
       const ppx = tile.pos.tileToPx(this.z, loc);
-      if (ppx.x < -CANVASW / 2 - TSIZE || ppx.x > CANVASW / 2 + TSIZE ||
-        ppx.y < -CANVASH / 2 - TSIZE || ppx.y > CANVASH / 2 + TSIZE) return;
+      if (ppx.x < -boundsX || ppx.x > boundsY ||
+        ppx.y < -boundsX || ppx.y > boundsY) return;
 
       let fullyDrawn = false;
 
