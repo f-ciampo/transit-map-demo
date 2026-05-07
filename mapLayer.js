@@ -70,7 +70,7 @@ class MapLayer {
     };
 
     img.onerror = () => tile.failed = true;
- 
+
     tile.cancel = () => {
       img.onload = null;
       img.onerror = null;
@@ -83,23 +83,22 @@ class MapLayer {
 
   getTiles(loc) {
     const p = loc.virtToTile(this.z);
-    const px = Math.floor(p.x);
-    const py = Math.floor(p.y);
 
-    //TODO: only add 1 when it is necessary
-    let numOfX = Math.ceil(this.canvas.width / TSIZE) + 1;
-    let numOfY = Math.ceil(this.canvas.height / TSIZE) + 1;
+    const tilesWide = CANVASW / TSIZE;
+    const tilesHigh = CANVASH / TSIZE;
+
+    const minX = Math.floor(p.x - tilesWide / 2);
+    const maxX = Math.ceil(p.x + tilesWide / 2);
+
+    const minY = Math.floor(p.y - tilesHigh / 2);
+    const maxY = Math.ceil(p.y + tilesHigh / 2);
+
+    console.log(tilesWide, tilesHigh);
 
     const it = performance.now();
 
-    let halfX = Math.floor(numOfX / 2), halfY = Math.floor(numOfY / 2);
-    if (p.x - px > 0.5 && numOfX % 2 === 0) halfX--;
-    if (p.y - py > 0.5 && numOfY % 2 === 0) halfY--;
-
-    for (let x = 0; x < numOfX; x++) {
-      for (let y = 0; y < numOfY; y++) {
-        let tx = px + x - halfX;
-        let ty = py + y - halfY;
+    for (let tx = minX; tx <= maxX; tx++) {
+      for (let ty = minY; ty <= maxY; ty++) {
         this.addTile(tx, ty, it);
       }
     }
@@ -107,8 +106,12 @@ class MapLayer {
     this.tiles.forEach(tile => {
       if (
         tile.it !== it &&
-        (tile.pos.x < px - halfX - 1 || tile.pos.x > px + (numOfX - halfX) ||
-          (tile.pos.y < py - halfY - 1 || tile.pos.y > py + (numOfY - halfY)))
+        (
+          tile.pos.x < minX - 1 ||
+          tile.pos.x > maxX + 1 ||
+          tile.pos.y < minY - 1 ||
+          tile.pos.y > maxY + 1
+        )
       ) {
         tile.cancel();
       }
@@ -136,8 +139,8 @@ class MapLayer {
 
     this.tiles.forEach((tile, key) => {
       const ppx = tile.pos.tileToPx(this.z, loc);
-      if (ppx.x < -boundsX || ppx.x > boundsY ||
-        ppx.y < -boundsX || ppx.y > boundsY) return;
+      if (ppx.x < -boundsX || ppx.x > boundsX ||
+        ppx.y < -boundsY || ppx.y > boundsY) return;
 
       let fullyDrawn = false;
 
