@@ -93,8 +93,6 @@ class MapLayer {
     const minY = Math.floor(p.y - tilesHigh / 2);
     const maxY = Math.ceil(p.y + tilesHigh / 2);
 
-    console.log(tilesWide, tilesHigh);
-
     const it = performance.now();
 
     for (let tx = minX; tx <= maxX; tx++) {

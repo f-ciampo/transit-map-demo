@@ -43,7 +43,7 @@ class Station {
     const c = new this.constructor(this.id);
     c.coords = this.coords.map(coord => coord?.clone());
     c.minZ = this.minZ;
-    for(let i = this.minZ; i <= MAXZOOM; i++) {
+    for (let i = this.minZ; i <= MAXZOOM; i++) {
       c.setProp(i, this.getProp(i));
     }
     return c;
@@ -62,7 +62,6 @@ class MapLine {
   }
   lightlyExtendUp() {
     const minMinZ = Math.min(...this.nodes.map(n => n.minZ));
-    console.log(minMinZ); 
     for (const n of this.nodes) {
       if (n.minZ === minMinZ) n.lightlyExtendUp();
     }
@@ -121,5 +120,26 @@ class LineProps {
     this.lineWidth = lineWidth;
     this.color = color;
     this.textColor = textColor;
+  }
+}
+
+class POI {
+  constructor(id, latlng, intNodes) {
+    this.id = id;
+    this.latlng = latlng;
+    this.coords = [];
+    this.coords[0] = latlng.latLngToVirt();
+    for (let z = MAXZOOM - 1; z >= MINZOOM; z--) {
+      const zz = MAXZOOM - z;
+      const next = this.getCoord(z + 1);
+      const dispCoord =
+        interpolateDisplacement(next, next, [intNodes], z + 1, z);
+      if (dispCoord) this.coords[zz] = next.added(dispCoord);
+    }
+  }
+  getCoord(z) {
+    for (let i = MAXZOOM - z; i >= 0; i--) {
+      if (this.coords[i]) return this.coords[i];
+    }
   }
 }

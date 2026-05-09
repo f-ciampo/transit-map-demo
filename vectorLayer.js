@@ -7,6 +7,12 @@ class VectorLayer {
     this.nCtx = nodesCanvas.getContext("2d");
     this.tCtx = textCanvas.getContext("2d");
 
+    this.sprites = new Image();
+    this.sprites.src = "sprites.png";
+    fetch("sprites.json")
+      .then(res => res.json())
+      .then(list => { this.spriteList = list; });
+
     this.renderMargins = 200;
 
     this.defaults();
@@ -65,7 +71,7 @@ class VectorLayer {
     return lerp(r0, r1, t);
   }
 
-  render(loc, viewZ, z0, z1, stations, lines, selected) {
+  render(loc, viewZ, z0, z1, stations, lines, pois, selected) {
     if (windowResized) this.defaults();
 
     const t = (z0 === z1) ? 1 : (viewZ - z0) / (z1 - z0);
@@ -74,6 +80,13 @@ class VectorLayer {
 
     for (const s of stations) {
       this.renderStation(s, viewZ, z0, z1, t, loc, selected);
+    }
+
+    this.nCtx.strokeStyle = "#fff";
+    this.nCtx.fillStyle = "#f00";
+    for (const p of pois) {
+      const cpx = this.getNodePx(p, viewZ, z0, z1, t, loc);
+      this.renderPOIMarker(cpx, 12);
     }
 
     const debugNodes = [];
@@ -161,6 +174,7 @@ class VectorLayer {
   renderStation(s, viewZ, z0, z1, t, loc, selected) {
     const coord = this.getNodePx(s, viewZ, z0, z1, t, loc);
     if (!coord) return;
+    const c1 = s.getCoord(z1).virtToPx(z, loc);
 
     if (!coord.isPxInView(this.renderMargins)) return;
 
@@ -175,11 +189,43 @@ class VectorLayer {
       return;
     }
 
-
+    const props1 = s.getProp(z1);
     const lineProps = props.lineProps;
 
     const strokeStyle = lineProps?.color ? lineProps.color : "#000000";
     const r = lineProps?.lineWidth ? lineProps.lineWidth / 2 - 1 : 3;
+
+    const entrances = props?.entrances || props1?.entrances;
+
+    if (entrances) {
+      const first = !!props?.entrances;
+      
+      this.nCtx.globalAlpha = z1 === z0 ? 1 : (first ? 1 - t : t);
+
+      const tt = z1 === z0 ? 0 : (first ? t : 1 - t);
+
+      for (const acc of entrances) {
+        const accPx = new Coord(acc.x, acc.y).virtToPx(z);
+
+        const x0 = coord.x + accPx.x;
+        const y0 = coord.y + accPx.y;
+        const x = z1 === z0 ? x0 : lerp(x0, c1.x, tt);
+        const y = z1 === z0 ? y0 : lerp(y0, c1.y, tt);
+
+        this.nCtx.beginPath();
+        this.nCtx.fillStyle = fillStyle;
+        this.nCtx.strokeStyle = strokeStyle;
+        this.nCtx.lineWidth = 4;
+
+        this.nCtx.arc(x, y, 7, 0, Math.PI * 2);
+        this.nCtx.stroke();
+        this.nCtx.fill();
+
+        this.drawSprite(acc.type, x, y);
+      }
+
+      this.nCtx.globalAlpha = first ? 1 - t : 1;
+    }
 
     this.nCtx.beginPath();
     this.nCtx.fillStyle = fillStyle;
@@ -188,9 +234,12 @@ class VectorLayer {
     this.nCtx.arc(coord.x, coord.y, r, 0, Math.PI * 2);
     this.nCtx.stroke();
     this.nCtx.fill();
+    this.nCtx.globalAlpha = 1;
 
-    const props1 = s.getProp(z1);
-    if (props === props1) {
+    if (props === props1 ||
+      (props.title === props1?.title &&
+        props.titleRot === props1?.titleRot &&
+        props.titlePos === props1?.titlePos)) {
       this.renderStationText(coord, props);
     } else {
       //TODO: clean this up with a general function
@@ -212,6 +261,15 @@ class VectorLayer {
 
       this.tCtx.globalAlpha = 1;
     }
+  }
+  drawSprite(name, x, y) {
+    const s = this.spriteList[name];
+    if (!s) return;
+    this.nCtx.drawImage(
+      this.sprites,
+      s.x, s.y, s.width, s.height,
+      x - s.width / 2, y - s.height / 2, s.width, s.height
+    );
   }
   renderStationText(coord, props) {
     if (props?.title) {
@@ -243,6 +301,32 @@ class VectorLayer {
       this.tCtx.outlinedTextMultiline(props.title, x, y, 22);
       this.tCtx.restore();
     }
+  }
+  renderPOIMarker(coord, radius) {
+    if (!coord.isPxInView(this.renderMargins)) return;
+
+    const height = radius * 2.8;
+    const cy = height - radius;
+
+    this.nCtx.beginPath();
+    this.nCtx.arc(coord.x, coord.y - cy, radius, Math.PI, 0);
+    this.nCtx.quadraticCurveTo(
+      coord.x + radius,
+      coord.y + radius - cy,
+      coord.x,
+      coord.y
+    );
+    this.nCtx.quadraticCurveTo(
+      coord.x - radius,
+      coord.y + radius - cy,
+      coord.x - radius,
+      coord.y - cy
+    );
+    this.nCtx.moveTo(coord.x, coord.y - radius);
+    this.nCtx.arc(coord.x, coord.y - cy, radius * 0.4, 0, Math.PI * 2);
+
+    this.nCtx.stroke();
+    this.nCtx.fill("evenodd");
   }
 }
 

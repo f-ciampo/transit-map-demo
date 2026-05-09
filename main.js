@@ -19,6 +19,8 @@ let mLayer = tileLayers[z];
 let stations = [];
 let lines = [];
 
+let activePOIs = [];
+
 let z0 = z;
 let z1 = z;
 
@@ -119,7 +121,7 @@ function render(now) {
   }
 
   if (EDITMAP || moved || !vectorLayer?.finishedDrawing || windowResized) {
-    vectorLayer.render(viewLoc, z, z0, z1, stations, lines, selectedNode);
+    vectorLayer.render(viewLoc, z, z0, z1, stations, lines, activePOIs, selectedNode);
   }
 
   overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
@@ -322,7 +324,7 @@ function startZoom(d) {
     mousePos.pxToVirt(z)
   );
 
-  const ii = interpolateDisplacement(viewUnderMouse, stations, z0, z1);
+  const ii = interpolateDisplacement(viewUnderMouse, viewLoc, [stations, activePOIs], z0, z1);
   if (ii) {
     tgtViewLoc.add(ii);
     shiftedAfterZoom = true;
@@ -362,39 +364,42 @@ function stepZoom() {
   }
 }
 
-function interpolateDisplacement(p, stations, z0, z1, k = 3) {
+function interpolateDisplacement(p, origin, lists, z0, z1, maxPxDist = 1500, k = 3) {
   //inverse distance weighting
   //TODO: only consider the n closest ones instead of culling with distance
+  //maybe do everything in virt coords so that zooming in and out doesn't move camera 
 
   let dx = 0;
   let dy = 0;
   let wsum = 0;
 
-  const p0 = p.virtToPx(z0, viewLoc);
+  const p0 = p.virtToPx(z0, origin);
 
   let hasMovement = false;
 
-  for (const s of stations) {
-    const c0 = s.getCoord(z0);
-    const c1 = s.getCoord(z1);
-    if (!c0 || !c1) continue;
+  for (const l of lists) {
+    for (const s of l) {
+      const c0 = s.getCoord(z0);
+      const c1 = s.getCoord(z1);
+      if (!c0 || !c1) continue;
 
-    const thisHasMovement = c0.dist(c1) > 5;
-    if (thisHasMovement) hasMovement = true;
+      const thisHasMovement = c0.dist(c1) > 5;
+      if (thisHasMovement) hasMovement = true;
 
-    const px0 = c0.virtToPx(z0, viewLoc);
-    const px1 = c1.virtToPx(z1, viewLoc);
+      const px0 = c0.virtToPx(z0, origin);
+      const px1 = c1.virtToPx(z1, origin);
 
 
-    const d = px0.dist(p0);
-    if (d > 1500) continue;
+      const d = px0.dist(p0);
+      if (d > maxPxDist) continue;
 
-    if (d < 20 && thisHasMovement) return px1.subed(px0).pxToVirt(z1);
+      if (d < 20 && thisHasMovement) return px1.subed(px0).pxToVirt(z1);
 
-    const w = 1 / Math.pow(d, k);
+      const w = 1 / Math.pow(d, k);
 
-    dx += (px1.x - px0.x) * w, dy += (px1.y - px0.y) * w;
-    wsum += w;
+      dx += (px1.x - px0.x) * w, dy += (px1.y - px0.y) * w;
+      wsum += w;
+    }
   }
 
   dx /= wsum, dy /= wsum;
