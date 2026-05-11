@@ -138,16 +138,16 @@ function controlsUpdate() {
   const dt = 16;
 
   if (DEBUG) {
-    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    overlayCtx.clearRect(0, 0, CANVASW, CANVASH);
     overlayCtx.beginPath();
-    overlayCtx.rect(0, 0, overlayCanvas.width, overlayCanvas.height);
-    overlayCtx.moveTo(overlayCanvas.width / 2, 0);
-    overlayCtx.lineTo(overlayCanvas.width / 2, overlayCanvas.height);
-    overlayCtx.moveTo(0, overlayCanvas.height / 2);
-    overlayCtx.lineTo(overlayCanvas.width, overlayCanvas.height / 2);
+    overlayCtx.rect(0, 0, CANVASW, CANVASH);
+    overlayCtx.moveTo(CANVASW / 2, 0);
+    overlayCtx.lineTo(CANVASW / 2, CANVASH);
+    overlayCtx.moveTo(0, CANVASH / 2);
+    overlayCtx.lineTo(CANVASW, CANVASH / 2);
     overlayCtx.fillText(scale, 10, 50);
     overlayCtx.stroke();
-    overlayCtx.translate(overlayCanvas.width / 2, overlayCanvas.height / 2);
+    overlayCtx.translate(CANVASW / 2, CANVASH / 2);
   }
 
 
@@ -173,7 +173,7 @@ function controlsUpdate() {
     overlayCtx.arc(-dragFling.x, -dragFling.y, 5, 0, 2 * Math.PI);
     overlayCtx.stroke();
 
-    overlayCtx.translate(-overlayCanvas.width / 2, -overlayCanvas.height / 2);
+    overlayCtx.translate(-CANVASW / 2, -CANVASH / 2);
 
     overlayCtx.beginPath();
     overlayCtx.arc(mousePos.x, mousePos.y, 10, 0, 2 * Math.PI);

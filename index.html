@@ -2,7 +2,8 @@
 <html>
 
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>transit.ar</title>
   <link rel="stylesheet" type="text/css" href="style.css">
 </head>
@@ -15,6 +16,7 @@
     <canvas id="nodesCanvas"></canvas>
     <canvas id="textCanvas"></canvas>
     <canvas id="overlayCanvas"></canvas>
+    <div id="searchBar" class="autocomplete"></div>
     <div id="attributions">
       transit.ar | ©
       <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>
@@ -25,6 +27,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/msgpackr@1.11.8/dist/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js""></script>
 
   <script src="global.js"></script>
   <script src="coords.js"></script>
@@ -37,6 +40,8 @@
 
   <script src="mapLayer.js"></script>
   <script src="vectorLayer.js"></script>
+
+  <script src="ui.js"></script>
 
   <script src="main.js"></script>
 

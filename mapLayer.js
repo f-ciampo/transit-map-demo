@@ -15,18 +15,29 @@ class MapLayer {
   }
 
   resetTransform() {
+    this.canvas.width = CANVASW * DPR;
+    this.canvas.height = CANVASH * DPR;
+    this.canvas.style.width = CANVASW + "px";
+    this.canvas.style.height = CANVASH + "px";
+
     this.numOfX = Math.ceil(CANVASW / TSIZE);
     if (this.numOfX % 2 === 0) this.numOfX++;
     this.numOfY = Math.ceil(CANVASH / TSIZE);
     if (this.numOfY % 2 === 0) this.numOfY++;
+
     this.ctx.strokeStyle = "#000";
     this.ctx.lineWidth = 1;
     this.ctx.fillStyle = "#000";
     this.ctx.textAlign = "center";
     this.ctx.textBaseline = "middle";
     this.ctx.font = "20px sans-serif";
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    this.ctx.translate(CANVASW / 2, CANVASH / 2);
+
+    this.ctx.setTransform(
+      DPR, 0,
+      0, DPR,
+      CANVASW / 2 * DPR,
+      CANVASH / 2 * DPR
+    );
   }
 
   clean() {
@@ -125,9 +136,12 @@ class MapLayer {
 
     let allReady = true;
 
-    this.ctx.setTransform(scale, 0, 0, scale,
-      this.canvas.width / 2,
-      this.canvas.height / 2);
+    this.ctx.setTransform(
+      scale * DPR, 0,
+      0, scale * DPR,
+      CANVASW / 2 * DPR,
+      CANVASH / 2 * DPR
+    );
 
     const pAlpha = this.ctx.globalAlpha;
 

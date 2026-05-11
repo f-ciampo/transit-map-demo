@@ -59,9 +59,6 @@ class RefImg {
 }
 const refimgs = [];
 
-loadDataIntoStations("stationsData.msgpack");
-loadDataIntoLines("linesData.msgpack");
-
 let prevDrawnZ = z0;
 
 let lastTime = performance.now();
@@ -69,6 +66,46 @@ let fps = 0;
 
 let activeSnapGuide = null;
 let snapGuides = [];
+
+let fuse;
+
+//TODO: add proper search terms for each station
+loadData("stationsData.msgpack").then(data => {
+  stations = data;
+  fuse = new Fuse(stations, {
+    keys: ["title"],
+    threshold: 0.4,
+    ignoreDiacritics: true,
+    useExtendedSearch: true,
+    getFn: station =>
+      station.getProp(MAXZOOM)?.title + ' ' + station.getProp(MAXZOOM)?.lineProps?.name || ""
+  });
+});
+loadDataIntoLines("linesData.msgpack");
+
+async function getSuggestions(text) {
+  if (!text.length) return;
+  const results = [];
+
+  return fuse.search(text, { limit: 10 }).map(x => ({
+    item: x.item,
+    text: x.item.getProp(MAXZOOM).title,
+    afterText: ' (' + x.item.getProp(MAXZOOM).lineProps.name + ')'
+  }));
+}
+
+function onAccept(value) {
+  const c = value?.item?.getCoord(z);
+  console.log("accepted: ", value, " c: ", c);
+  if (c) tgtViewLoc.set(c);
+}
+
+new Autocomplete(
+  document.getElementById("searchBar"),
+  getSuggestions, onAccept,
+  "Buscar estaciones...",
+  300
+);
 
 function render(now) {
   controlsUpdate();

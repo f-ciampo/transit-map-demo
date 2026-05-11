@@ -22,6 +22,10 @@ class VectorLayer {
     this.finishedDrawing = false;
   }
   defaults() {
+    this.lCtx.setTransform(DPR, 0, 0, DPR, CANVASW / 2 * DPR, CANVASH / 2 * DPR);
+    this.nCtx.setTransform(DPR, 0, 0, DPR, CANVASW / 2 * DPR, CANVASH / 2 * DPR);
+    this.tCtx.setTransform(DPR, 0, 0, DPR, CANVASW / 2 * DPR, CANVASH / 2 * DPR);
+
     this.lCtx.lineCap = "round";
     this.lCtx.lineJoin = "round";
 
@@ -34,24 +38,21 @@ class VectorLayer {
 
   clear() {
     this.lCtx.clearRect(
-      -this.linesCanvas.width / 2,
-      -this.linesCanvas.height / 2,
-      this.linesCanvas.width,
-      this.linesCanvas.height
+      -CANVASW / 2, -CANVASH / 2,
+      CANVASW, CANVASH
     );
+
     this.nCtx.clearRect(
-      -this.nodesCanvas.width / 2,
-      -this.nodesCanvas.height / 2,
-      this.nodesCanvas.width,
-      this.nodesCanvas.height
+      -CANVASW / 2, -CANVASH / 2,
+      CANVASW, CANVASH
     );
+
     this.tCtx.clearRect(
-      -this.textCanvas.width / 2,
-      -this.textCanvas.height / 2,
-      this.textCanvas.width,
-      this.textCanvas.height
+      -CANVASW / 2, -CANVASH / 2,
+      CANVASW, CANVASH
     );
   }
+
 
   getNodePx(node, z, z0, z1, t, loc) {
     const c0 = node.getCoord(z0);
@@ -199,7 +200,7 @@ class VectorLayer {
 
     if (entrances) {
       const first = !!props?.entrances;
-      
+
       this.nCtx.globalAlpha = z1 === z0 ? 1 : (first ? 1 - t : t);
 
       const tt = z1 === z0 ? 0 : (first ? t : 1 - t);
