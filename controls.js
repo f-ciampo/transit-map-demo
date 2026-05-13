@@ -25,6 +25,8 @@ const DRAG_THRESHOLD = 4;
 const pointers = new Map();
 let startPos = new Map();
 let lastHyp = 0;
+let gestureHadMultiTouch = false;
+let gestureHadZoomIntent = false;
 
 let wheelDelta = 0;
 
@@ -36,6 +38,8 @@ overlayCanvas.addEventListener("pointerdown", (e) => {
   const p = new Coord(e.clientX, e.clientY);
   pointers.set(e.pointerId, p);
   startPos.set(e.pointerId, p.clone());
+
+  if (pointers.size >= 2) gestureHadMultiTouch = true;
 
   drag.reset();
   dragFling.reset();
@@ -84,12 +88,15 @@ overlayCanvas.addEventListener("pointermove", (e) => {
 
     const [a, b] = [...pointers.values()];
     const d = a.subed(b);
+    const pinchDelta = d.hyp() - lastHyp;
 
     const mid = a.mid(b);
 
     mousePos.setXY(mid.x - CANVASW / 2, mid.y - CANVASH / 2);
 
-    wheelDelta += (d.hyp() - lastHyp) / TSIZE;// /2;
+    if (Math.abs(pinchDelta) > 1) gestureHadZoomIntent = true;
+
+    wheelDelta += pinchDelta / TSIZE;// /2;
     console.log(wheelDelta);
     lastHyp = d.hyp();
     dragTo(mid);
@@ -113,7 +120,12 @@ overlayCanvas.addEventListener("pointerup", (e) => {
     isDragging = false;
     overlayCanvas.style.cursor = "default";
 
-    if (!wasDragging) handleClick(new Coord(e.offsetX - CANVASW / 2, e.offsetY - CANVASH / 2));
+    if (!wasDragging && !gestureHadMultiTouch && !gestureHadZoomIntent) {
+      handleClick(new Coord(e.offsetX - CANVASW / 2, e.offsetY - CANVASH / 2));
+    }
+
+    gestureHadMultiTouch = false;
+    gestureHadZoomIntent = false;
   }
 });
 
@@ -123,13 +135,17 @@ overlayCanvas.addEventListener("wheel", (e) => {
 });
 
 overlayCanvas.addEventListener("pointercancel", cleanup);
-overlayCanvas.addEventListener("pointerleave", cleanup);
 
 function cleanup(e) {
-  pointers.clear();
-  startPos.clear();
-  isDragging = false;
-  overlayCanvas.style.cursor = "default";
+  pointers.delete(e.pointerId);
+  startPos.delete(e.pointerId);
+
+  if (pointers.size === 0) {
+    isDragging = false;
+    gestureHadMultiTouch = false;
+    gestureHadZoomIntent = false;
+    overlayCanvas.style.cursor = "default";
+  }
 }
 
 let lastDragFling = new Coord();
