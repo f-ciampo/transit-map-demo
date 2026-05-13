@@ -3,7 +3,7 @@ class Autocomplete {
     container,
     getSuggestions,
     onAccept,
-    defaultText,
+    defaultHint,
     delay = 300
   ) {
     this.container = container;
@@ -26,7 +26,8 @@ class Autocomplete {
     this.delay = delay;
     this.completeTimeout = null;
 
-    this.inputElement.placeholder = defaultText;
+    this.defaultHint = defaultHint;
+    this.inputElement.placeholder = defaultHint;
 
     this.loading = false;
 
@@ -36,7 +37,7 @@ class Autocomplete {
   bindEvents() {
     this.inputElement.addEventListener("input", () => {
       clearTimeout(this.completeTimeout);
-      
+
       this.loading = true;
       this.renderSuggestions();
 
@@ -105,7 +106,7 @@ class Autocomplete {
       this.completeText();
     });
   }
-  
+
   async completeText() {
     this.suggestions =
       await this.getSuggestions(this.inputElement.value) || [];
@@ -169,6 +170,7 @@ class Autocomplete {
   accept(value) {
     //this.inputElement.value = value.text;
     this.inputElement.value = "";
+    this.inputElement.placeholder = this.defaultHint;
 
     this.suggestions = [];
     this.selectingIndex = -1;
@@ -176,5 +178,10 @@ class Autocomplete {
     this.renderSuggestions();
 
     this.onAccept?.(value);
+  }
+
+  setHint(newHint = this.defaultHint) {
+    this.inputElement.placeholder = newHint;
+    this.renderSuggestions();
   }
 }

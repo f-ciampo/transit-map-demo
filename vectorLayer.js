@@ -34,6 +34,8 @@ class VectorLayer {
     this.tCtx.textAlign = "center";
     this.tCtx.fillStyle = "#222222";
     this.tCtx.strokeStyle = "#FFFFFF";
+    this.tCtx.lineCap = "round";
+    this.tCtx.lineJoin = "round"
   }
 
   clear() {
@@ -83,11 +85,19 @@ class VectorLayer {
       this.renderStation(s, viewZ, z0, z1, t, loc, selected);
     }
 
-    this.nCtx.strokeStyle = "#fff";
-    this.nCtx.fillStyle = "#f00";
-    for (const p of pois) {
-      const cpx = this.getNodePx(p, viewZ, z0, z1, t, loc);
-      this.renderPOIMarker(cpx, 12);
+    if (pois.length) {
+      this.nCtx.strokeStyle = "#fff";
+      this.nCtx.fillStyle = "#f00";
+      if (viewZ <= MINGEOZOOM - 1) this.nCtx.globalAlpha = 0.4;
+      else if (viewZ < MINGEOZOOM && viewZ > MINGEOZOOM - 1) {
+        const tt = z1 > z0 ? 1 - t : t;
+        this.nCtx.globalAlpha = lerp(1, 0.4, tt);
+      }
+      for (const p of pois) {
+        const cpx = this.getNodePx(p, viewZ, z0, z1, t, loc);
+        this.renderPOIMarker(cpx, 12);
+      }
+      this.nCtx.globalAlpha = 1;
     }
 
     const debugNodes = [];
@@ -179,7 +189,7 @@ class VectorLayer {
 
     if (!coord.isPxInView(this.renderMargins)) return;
 
-    const fillStyle = s === selected ? "#FF8888" : "#FFFFFF";
+    const fillStyle = "#FFFFFF";
 
     const props = s.getProp(z0);
     if (!props) {
@@ -194,7 +204,8 @@ class VectorLayer {
     const lineProps = props.lineProps;
 
     const strokeStyle = lineProps?.color ? lineProps.color : "#000000";
-    const r = lineProps?.lineWidth ? lineProps.lineWidth / 2 - 1 : 3;
+    let r = lineProps?.lineWidth ? lineProps.lineWidth / 2 - 1 : 3;
+    if (s === selected) r *= 1.4;
 
     const entrances = props?.entrances || props1?.entrances;
 
@@ -228,6 +239,9 @@ class VectorLayer {
       this.nCtx.globalAlpha = first ? 1 - t : 1;
     }
 
+    this.nCtx.globalAlpha = 1;
+
+
     this.nCtx.beginPath();
     this.nCtx.fillStyle = fillStyle;
     this.nCtx.strokeStyle = strokeStyle;
@@ -235,7 +249,12 @@ class VectorLayer {
     this.nCtx.arc(coord.x, coord.y, r, 0, Math.PI * 2);
     this.nCtx.stroke();
     this.nCtx.fill();
-    this.nCtx.globalAlpha = 1;
+    if (s === selected) {
+      this.nCtx.beginPath();
+      this.nCtx.fillStyle = '#444';
+      this.nCtx.arc(coord.x, coord.y, r * 0.5, 0, Math.PI * 2);
+      this.nCtx.fill();
+    }
 
     if (props === props1 ||
       (props.title === props1?.title &&

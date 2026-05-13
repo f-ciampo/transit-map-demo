@@ -1,8 +1,10 @@
-const MINZOOM = 11;
+const MINZOOM = 12;
 const MAXZOOM = 19;
 const MAXVIEWZOOM = 17;
 const TSIZE = 512;
 const WORLD_EXTENT = Math.pow(2, MAXZOOM) * TSIZE;
+
+let MINGEOZOOM = 15;
 
 let DEBUG = false;
 

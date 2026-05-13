@@ -124,11 +124,12 @@ class LineProps {
 }
 
 class POI {
-  constructor(id, latlng, intNodes) {
+  constructor(id, latlng, intNodes, islatlng = false) {
     this.id = id;
     this.latlng = latlng;
     this.coords = [];
-    this.coords[0] = latlng.latLngToVirt();
+    this.coords[0] = islatlng ? latlng.latLngToVirt() : latlng;
+    if (!intNodes?.length) return this;
     for (let z = MAXZOOM - 1; z >= MINZOOM; z--) {
       const zz = MAXZOOM - z;
       const next = this.getCoord(z + 1);

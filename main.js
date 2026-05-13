@@ -69,6 +69,8 @@ let snapGuides = [];
 
 let fuse;
 
+let mapUpdate = true;
+
 //TODO: add proper search terms for each station
 loadData("stationsData.msgpack").then(data => {
   stations = data;
@@ -96,11 +98,14 @@ async function getSuggestions(text) {
 
 function onAccept(value) {
   const c = value?.item?.getCoord(z);
-  console.log("accepted: ", value, " c: ", c);
-  if (c) tgtViewLoc.set(c);
+  if (c) {
+    tgtViewLoc.set(c);
+    z1 = Math.max(z, MINZOOM + 1);
+    selectStation(value.item);
+  }
 }
 
-new Autocomplete(
+const searchBox = new Autocomplete(
   document.getElementById("searchBar"),
   getSuggestions, onAccept,
   "Buscar estaciones...",
@@ -122,7 +127,8 @@ function render(now) {
     clean up this logic...
     tile positioning seems wrong when mooving while zooming
   */
-  if (moved || !mLayer?.finishedDrawing || windowResized) {
+  mapUpdate = mapUpdate || (moved || !mLayer?.finishedDrawing || windowResized);
+  if (mapUpdate) {
     if (z !== Math.round(z)) {
       tilesCanvasCtx.setTransform(1, 0, 0, 1, 0, 0);
       tilesCanvasCtx.clearRect(0, 0, tilesCanvas.width, tilesCanvas.height);
@@ -157,7 +163,7 @@ function render(now) {
     }
   }
 
-  if (EDITMAP || moved || !vectorLayer?.finishedDrawing || windowResized) {
+  if (EDITMAP || mapUpdate) {
     vectorLayer.render(viewLoc, z, z0, z1, stations, lines, activePOIs, selectedNode);
   }
 
@@ -227,38 +233,64 @@ function handleDrag(d) {
 }
 
 function handleWheel(d) {
-  if (z + d > MAXVIEWZOOM || z + d <= MINZOOM) return;
+  if (z + d > MAXVIEWZOOM || z + d < MINZOOM) return;
   startZoom(d);
 }
 
-function handleClick(m) {
-  if (!EDITMAP) return;
-  let d = Infinity;
-  selectedNode = undefined;
-  selectedLine = undefined;
+function selectStation(s) {
+  selectedNode = s;
+  activePOIs = [];
+  searchBox.setHint(
+    s.getProp(MAXZOOM)?.title +
+    ' (' + s.getProp(MAXZOOM).lineProps.name + ')'
+    || ""
+  );
+  selectedNode = s;
+}
 
-  if (EDITLINES) {
-    for (const l of lines) {
-      for (const n of l.nodes) {
-        const dd = n.getCoord(z)?.virtToPx(z, viewLoc).dist(m);
-        if (dd < d && dd < 100) {
-          selectedNode = n;
-          selectedLine = l;
-          d = dd;
-        }
-      }
+function handleClick(m) {
+  let dl = Infinity;
+  selectedNode = undefined;
+  activePOIs = [];
+  let clickedStation;
+  mapUpdate = true;
+
+  let ds = Infinity;
+  for (const s of stations) {
+    const dd = s.getCoord(z)?.virtToPx(z, viewLoc).dist(m);
+    if (dd < ds && dd < 20) {
+      clickedStation = s;
+      ds = dd;
     }
-    console.log("selected node: ", selectedNode);
-    console.log("selected line: ", selectedLine);
+  }
+
+  if (clickedStation) {
+    selectStation(clickedStation);
     return;
   }
 
-  for (const s of stations) {
-    const dd = s.getCoord(z)?.virtToPx(z, viewLoc).dist(m);
-    if (dd < d && dd < 100) {
-      selectedNode = s;
-      d = dd;
+  searchBox.setHint();
+  
+  if (z >= MINGEOZOOM) {
+    const clickedOnPx = m.pxToVirt(z).add(viewLoc);
+    activePOIs = [new POI(0, clickedOnPx, stations)];
+  }
+
+  if (!EDITMAP) return;
+
+  if (EDITLINES) {
+    selectedLine = undefined;
+    for (const l of lines) {
+      for (const n of l.nodes) {
+        const dd = n.getCoord(z)?.virtToPx(z, viewLoc).dist(m);
+        if (dd < dl && dd < 100) {
+          selectedNode = n;
+          selectedLine = l;
+          dl = dd;
+        }
+      }
     }
+    console.log("selected line: ", selectedLine);
   }
   console.log("selected node: ", selectedNode);
 }
@@ -446,4 +478,3 @@ function interpolateDisplacement(p, origin, lists, z0, z1, maxPxDist = 1500, k =
 }
 
 render();
-
