@@ -96,8 +96,7 @@ overlayCanvas.addEventListener("pointermove", (e) => {
 
     if (Math.abs(pinchDelta) > 1) gestureHadZoomIntent = true;
 
-    wheelDelta += pinchDelta / TSIZE;// /2;
-    console.log(wheelDelta);
+    wheelDelta += pinchDelta / TSIZE * 2;
     lastHyp = d.hyp();
     dragTo(mid);
   }
