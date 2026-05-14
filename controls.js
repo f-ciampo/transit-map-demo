@@ -1,6 +1,6 @@
 /*
 TODO:
-  cleanup
+  cleanup, refactor...
   make zoom granular and consistent across resolutions
   decouple movements from framerate
 */
@@ -26,7 +26,6 @@ const pointers = new Map();
 let startPos = new Map();
 let lastHyp = 0;
 let gestureHadMultiTouch = false;
-let gestureHadZoomIntent = false;
 
 let wheelDelta = 0;
 
@@ -94,8 +93,6 @@ overlayCanvas.addEventListener("pointermove", (e) => {
 
     mousePos.setXY(mid.x - CANVASW / 2, mid.y - CANVASH / 2);
 
-    if (Math.abs(pinchDelta) > 1) gestureHadZoomIntent = true;
-
     wheelDelta += pinchDelta / TSIZE * 2;
     lastHyp = d.hyp();
     dragTo(mid);
@@ -115,16 +112,29 @@ overlayCanvas.addEventListener("pointerup", (e) => {
   pointers.delete(e.pointerId);
   startPos.delete(e.pointerId);
 
-  if (pointers.size === 0) {
+  wheelDelta = 0;
+
+  if (pointers.size === 1) {
+    const [id, p] = [...pointers.entries()][0];
+
+    dragUpdate.set(p);
+    drag.set(new Coord());
+
+    startPos.set(id, p.clone());
+
+    dragFling.reset();
+    dragFlingSmooth.reset();
+
+    gestureHadMultiTouch = false;
+  } else if (pointers.size === 0) {
     isDragging = false;
     overlayCanvas.style.cursor = "default";
 
-    if (!wasDragging && !gestureHadMultiTouch && !gestureHadZoomIntent) {
+    if (!wasDragging && !gestureHadMultiTouch) {
       handleClick(new Coord(e.offsetX - CANVASW / 2, e.offsetY - CANVASH / 2));
     }
 
     gestureHadMultiTouch = false;
-    gestureHadZoomIntent = false;
   }
 });
 
@@ -142,7 +152,6 @@ function cleanup(e) {
   if (pointers.size === 0) {
     isDragging = false;
     gestureHadMultiTouch = false;
-    gestureHadZoomIntent = false;
     overlayCanvas.style.cursor = "default";
   }
 }
