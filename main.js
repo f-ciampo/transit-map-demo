@@ -1,6 +1,6 @@
 let ZOOMSPEED = 0.3; //TODO: make this independent of fps
 
-let z = 14;
+let z = 13;
 
 let tileLayers = [];
 const TILESURL = 'https://tiles.transit.ar/caba-512/{z}/{x}/{y}.webp';
@@ -62,7 +62,6 @@ const refimgs = [];
 let prevDrawnZ = z0;
 
 let lastTime = performance.now();
-let fps = 0;
 
 let activeSnapGuide = null;
 let snapGuides = [];
@@ -113,9 +112,14 @@ const searchBox = new Autocomplete(
 );
 
 function render(now) {
+  now ??= performance.now();
+  const dt = now - lastTime;
+  lastTime = now;
+  const fps = 1000 / dt;
+
   controlsUpdate();
 
-  stepZoom();
+  stepZoom(dt);
 
   tgtViewLoc.snapInsideBbox(MAP_BOUNDS);
 
@@ -179,8 +183,6 @@ function render(now) {
   }
 
   if (DEBUG) {
-    fps = 1000 / (now - lastTime);
-    lastTime = now;
     overlayCtx.save();
     overlayCtx.beginPath();
     overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
@@ -408,8 +410,10 @@ function startZoom(d) {
   mousePosStart.set(mousePos);
 }
 
-function stepZoom() {
-  z = lerp(z, z1, ZOOMSPEED);
+function stepZoom(dtMs = 1000 / 60) {
+  const frameScale = Math.max(dtMs, 0) * 60 / 1000;
+  const zoomSpeed = 1 - Math.pow(1 - ZOOMSPEED, frameScale);
+  z = lerp(z, z1, zoomSpeed);
 
   const t = (z0 === z1) ? 1 : (z - z0) / (z1 - z0);
 
