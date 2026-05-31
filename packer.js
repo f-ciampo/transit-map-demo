@@ -13,10 +13,10 @@ msgpackr.addExtension({
   Class: Station,
   type: 2,
   write(station) {
-    return [station.id, station.coords, station.props];
+    return [station.id, station.coords, station.props, station.minZ];
   },
   read(s) {
-    return new Station(s[0], s[1], s[2]);
+    return new Station(s[0], s[1], s[2], s[3]);
   }
 });
 
@@ -57,10 +57,10 @@ msgpackr.addExtension({
   Class: LineProps,
   type: 6,
   write(ml) {
-    return [ml.name, ml.lineWidth, ml.color, ml.textColor];
+    return [ml.name, ml.lineWidth, ml.color, ml.textColor, ml.type];
   },
   read(data) {
-    return new LineProps(data[0], data[1], data[2], data[3]);
+    return new LineProps(data[0], data[1], data[2], data[3], data[4]);
   }
 });
 

@@ -104,30 +104,36 @@ class VectorLayer {
 
     for (const l of lines) {
       this.renderLine(l, viewZ, z0, z1, t, loc, selected);
-
-      if (!EDITLINES) continue;
-      let curr;
-      for (const n of l.nodes) {
-        curr = this.getNodePx(n, viewZ, z0, z1, t, loc);
-        if (!curr) continue;
-        this.lCtx.beginPath();
-        this.lCtx.strokeStyle = '#ff0000';
-        this.lCtx.fillStyle = n === selected ? '#ff0000' : '#ffffff';
-        this.lCtx.lineWidth = 2;
-        this.lCtx.arc(curr.x, curr.y, 5, 0, Math.PI * 2);
-        this.lCtx.stroke();
-        this.lCtx.fill();
-      }
-      for (const n of debugNodes) {
-        this.lCtx.beginPath();
-        this.lCtx.fillStyle = '#ffaa00';
-        this.lCtx.lineWidth = 0;
-        this.lCtx.arc(n.x, n.y, 5, 0, Math.PI * 2);
-        this.lCtx.fill();
+    }
+    for (const l of lines) {
+      if (l.lineProps.type === 'rail') {
+        this.renderLine(l, viewZ, z0, z1, t, loc, selected, true);
       }
     }
-    this.lCtx.globalAlpha = 1;
-
+    if (EDITLINES) {
+      for (const l of lines) {
+        let curr;
+        for (const n of l.nodes) {
+          curr = this.getNodePx(n, viewZ, z0, z1, t, loc);
+          if (!curr) continue;
+          this.lCtx.beginPath();
+          this.lCtx.strokeStyle = '#ff0000';
+          this.lCtx.fillStyle = n === selected ? '#ff0000' : '#ffffff';
+          this.lCtx.lineWidth = 2;
+          this.lCtx.arc(curr.x, curr.y, 5, 0, Math.PI * 2);
+          this.lCtx.stroke();
+          this.lCtx.fill();
+        }
+        for (const n of debugNodes) {
+          this.lCtx.beginPath();
+          this.lCtx.fillStyle = '#ffaa00';
+          this.lCtx.lineWidth = 0;
+          this.lCtx.arc(n.x, n.y, 5, 0, Math.PI * 2);
+          this.lCtx.fill();
+        }
+        this.lCtx.globalAlpha = 1;
+      }
+    }
 
     this.finishedDrawing =
       loc.equals(this.prev?.loc) && viewZ === this.prev.viewZ &&
@@ -136,10 +142,10 @@ class VectorLayer {
       !windowResized;
     this.prev = { loc, viewZ, z0, z1, selected };
   }
-  renderLine(l, viewZ, z0, z1, t, loc, selected) {
+  renderLine(l, viewZ, z0, z1, t, loc, selected, onlyCenter) {
     const props = l.lineProps;
-    this.lCtx.lineWidth = props.lineWidth;
-    this.lCtx.strokeStyle = props.color;
+    this.lCtx.lineWidth = onlyCenter ? props.lineWidth / 3 : props.lineWidth;
+    this.lCtx.strokeStyle = onlyCenter ? '#FFFFFF' : props.color;
 
     let curr = this.getNodePx(l.nodes[0], viewZ, z0, z1, t, loc);
     if (!curr) return;

@@ -272,7 +272,7 @@ function handleClick(m) {
   }
 
   searchBox.setHint();
-  
+
   if (z >= MINGEOZOOM) {
     const clickedOnPx = m.pxToVirt(z).add(viewLoc);
     activePOIs = [new POI(0, clickedOnPx, stations)];
@@ -286,6 +286,7 @@ function handleClick(m) {
       for (const n of l.nodes) {
         const dd = n.getCoord(z)?.virtToPx(z, viewLoc).dist(m);
         if (dd < dl && dd < 100) {
+          activePOIs = [];
           selectedNode = n;
           selectedLine = l;
           dl = dd;
@@ -299,13 +300,23 @@ function handleClick(m) {
 
 function handleKey(key, code) {
   const mouseVirtPos = mousePos.pxToVirt(z).add(viewLoc);
+  const shift = key !== key.toLowerCase();
   switch (key) {
+    case '+':
+      if (z < MAXVIEWZOOM) startZoom(1);
+      break;
+    case '-':
+      if (z > MINZOOM) startZoom(-1);
+      break;
+  }
+  if (!EDITMAP) return;
+  selCoord = selectedNode?.getCoord(z);
+  switch (key.toLowerCase()) {
     case 'g':
-      if (!EDITMAP) return;
-      selectedNode.getCoord(z)?.set(mouseVirtPos);
+      selCoord?.set(mouseVirtPos);
       if (activeSnapGuide) {
         const sd = 15;
-        const snc = selectedNode.getCoord(z);
+        const snc = selCoord;
         if (virtToPx(z, Math.abs(activeSnapGuide.x - mouseVirtPos.x)) < sd) {
           snc.x = activeSnapGuide.x;
           return;
@@ -331,47 +342,65 @@ function handleKey(key, code) {
         }
       }
       break;
-    case '+':
-      if (z >= MAXVIEWZOOM) return;
-      startZoom(1);
+    case 'a':
+      activeSnapGuide = selCoord;
       break;
-    case '-':
-      if (z <= MINZOOM) return;
-      startZoom(-1);
+    case 'ArrowUp':
+      if (selectedNode) selCoord.addXY(0, -pxToVirt(z, 0.5));
+      break;
+    case 'ArrowDown':
+      if (selectedNode) selCoord.addXY(0, pxToVirt(z, 0.5));
+      break;
+    case 'ArrowLeft':
+      if (selectedNode) selCoord.addXY(-pxToVirt(z, 0.5), 0);
+      break;
+    case 'ArrowRight':
+      if (selectedNode) selCoord.addXY(pxToVirt(z, 0.5), 0);
       break;
     case 'l':
-      if (!EDITMAP) return;
       EDITLINES = !EDITLINES;
       console.log("EDITLINES: ", EDITLINES);
       break;
+    case 'm':
+      if (!EDITLINES) return;
+      if (selectedNode) selCoord.r += shift ? 100 : 1000;
+      break;
+    case 'n':
+      if (!EDITLINES) return;
+      if (selectedNode) selCoord.r += shift ? -100 : -1000;
+      break;
+    case 'b':
+      if (!EDITLINES) return;
+      if (selectedNode) selCoord.r = 0;
+      break;
     case 'e':
-      if (!EDITMAP) return;
       if (!selectedNode) return;
       let line = selectedLine;
       if (!line) {
         line = new MapLine(selectedNode.getProp(z).lineProps, []);
+        const n = line.addCoord(MAXZOOM, selCoord.clone());
+        n.minZ = MINZOOM;
+        lines.push(line);
       }
       EDITLINES = true;
-      selectedNode = line.addCoordAtZ(mouseVirtPos, z);
+      selectedNode = line.addCoord(MAXZOOM, mouseVirtPos);
+      selectedNode.minZ = MINZOOM;
       console.log("coord: ", selectedNode);
       selectedLine = line;
-      lines.push(line);
     case 's':
-      if (!EDITMAP) return;
-      for (const sg of snapGuides) {
-        const dd = sg?.virtToPx(z, viewLoc).dist(mousePos);
-        if (dd < 10) {
-          activeSnapGuide = sg;
-          return;
+      if (!shift) {
+        for (const sg of snapGuides) {
+          const dd = sg?.virtToPx(z, viewLoc).dist(mousePos);
+          if (dd < 10) {
+            activeSnapGuide = sg;
+            return;
+          }
         }
-      }
-      activeSnapGuide = activeSnapGuide ? null : mouseVirtPos;
-      break;
-    case 'S':
-      if (!EDITMAP) return;
-      if (activeSnapGuide)
+        activeSnapGuide = activeSnapGuide ? null : mouseVirtPos;
+      } else if (activeSnapGuide) {
         snapGuides.push(activeSnapGuide.clone());
-      activeSnapGuide = null;
+        activeSnapGuide = null;
+      }
       break;
   }
 }
